@@ -1,0 +1,17 @@
+# Virtual Environments
+venv/
+
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+
+# Ignore environment configuration files
+.env
+
+
+# Ignore any other temporary files
+*.log
+*.tmp
