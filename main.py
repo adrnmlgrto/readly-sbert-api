@@ -1,6 +1,6 @@
 import numpy as np
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer
 
 
@@ -13,10 +13,56 @@ app = FastAPI()
 model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
 
 
-# Define the input schema for the request.
+# Define schema(s) for the request and response.
 class TextComparisonRequest(BaseModel):
-    correct_answers: list[str]
-    user_answer: str
+    correct_answers: list[str] = Field(
+        ...,
+        description=(
+            'The list of expected correct answers to a question.'
+        ),
+        examples=[
+            [
+                'It was just a dream.',
+                'Chandu was only dreaming of flying.',
+                'He was only dreaming.'
+            ]
+        ]
+    )
+    user_answer: str = Field(
+        ...,
+        description=(
+            'The user\'s actual text answer or input to a question.'
+        ),
+        examples=[
+            'Chandu only dreamt of flying.'
+        ]
+    )
+
+
+class TextComparisonResponse(BaseModel):
+    similarity_scores: list[float] = Field(
+        ...,
+        description=(
+            'List of individual similarity scores upon comparing '
+            'user text input to the expected answers.'
+        ),
+        examples=[
+            [
+                0.5203630636661963,
+                0.8931472296869409,
+                0.612681223305576
+            ]
+        ]
+    )
+    max_similarity: float = Field(
+        ...,
+        description=(
+            'The highest similarity score from the list. '
+            'This value is the one to check if the user\'s input '
+            'is similar or not.'
+        ),
+        examples=[0.8931472296869409]
+    )
 
 
 # Function to calculate Pearson correlation.
@@ -27,38 +73,42 @@ def pearson_correlation(x, y):
     return np.corrcoef(x, y)[0, 1]
 
 
-@app.post('/compare')
+@app.get('/heartbeat')
+async def read_heartbeat():
+    """
+    Simple endpoint for checking if the API
+    endpoint(s) are available or not.
+    """
+    return {
+        'status': 'ONLINE',
+        'message': 'Service endpoints are currently available.'
+    }
+
+
+@app.post('/compare', response_model=TextComparisonResponse)
 async def compare_texts(request: TextComparisonRequest):
     """
     Performs the semantic context similarity comparison
     on a set of provided "expected" correct answers to
     a user's text input / answer.
-
-    Question:
-        - Was Chandu really flying or was it just a dream?
-
-    Expected Answers:
-        - It was just a dream.
-        - Chandu was only dreaming of flying.
-        - He was only dreaming.
     """
     # Encode all variations of correct answers.
     correct_embeddings = model.encode(request.correct_answers)
 
-    # Encode the user's answer
+    # Encode the user's answer.
     user_embedding = model.encode(request.user_answer)
 
-    # Compute similarity scores
+    # Compute the individual similarity scores.
     similarity_scores = [
         pearson_correlation(correct, user_embedding)
         for correct in correct_embeddings
     ]
 
-    # Determine the highest similarity score
+    # Determine the highest similarity score.
     max_similarity = max(similarity_scores)
 
     # We will return the individual similarity scores, and the max.
-    return {
-        'similarity_scores': similarity_scores,
-        'max_similarity': max_similarity
-    }
+    return TextComparisonResponse(
+        similarity_scores=similarity_scores,
+        max_similarity=max_similarity
+    )
