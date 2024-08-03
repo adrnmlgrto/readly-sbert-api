@@ -17,8 +17,7 @@ app = FastAPI()
 
 
 # Loading of the pre-trained SBERT model.
-# NOTE: Uses the `paraphrase-MiniLM-L6-v2`.
-model = SentenceTransformer('paraphrase-MiniLM-L6-v2')
+model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
 # Define schema(s) for the request and response.
