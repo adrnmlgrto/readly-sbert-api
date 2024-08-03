@@ -1,6 +1,15 @@
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer, util
+
+
+# Setup of logging configurations.
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 
 # Defining of the main FastAPI application.
@@ -64,6 +73,51 @@ class TextComparisonResponse(BaseModel):
     )
 
 
+# Exception Handlers
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Custom exception handler for HTTPExceptions.
+    Logs error details and returns a JSON response.
+    """
+    # Log the error along with request details
+    headers = dict(request.headers)
+    body = await request.body()
+    logger.error(f"HTTPException occurred: {exc.detail}")
+    logger.error(f"Request Headers: {headers}")
+    logger.error(f"Request Body: {body.decode('utf-8')}")
+
+    # Return JSON response with error details
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(
+    request: Request,
+    exc: RequestValidationError
+):
+    """
+    Custom exception handler for RequestValidationError.
+    Logs validation error details and returns a JSON response.
+    """
+    # Log the error along with request details
+    headers = dict(request.headers)
+    body = await request.body()
+    logger.error(f"RequestValidationError occurred: {exc.errors()}")
+    logger.error(f"Request Headers: {headers}")
+    logger.error(f"Request Body: {body.decode('utf-8')}")
+
+    # Return JSON response with error details
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
+
+
+# Endpoints
 @app.get('/heartbeat')
 async def read_heartbeat():
     """
