@@ -1,7 +1,6 @@
-import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, util
 
 
 # Defining of the main FastAPI application.
@@ -65,14 +64,6 @@ class TextComparisonResponse(BaseModel):
     )
 
 
-# Function to calculate Pearson correlation.
-def pearson_correlation(x, y):
-    """
-    Calculates the pearson correlation value.
-    """
-    return np.corrcoef(x, y)[0, 1]
-
-
 @app.get('/heartbeat')
 async def read_heartbeat():
     """
@@ -99,10 +90,11 @@ async def compare_texts(request: TextComparisonRequest):
     user_embedding = model.encode(request.user_answer)
 
     # Compute the individual similarity scores.
-    similarity_scores = [
-        pearson_correlation(correct, user_embedding)
-        for correct in correct_embeddings
-    ]
+    similarity_scores_tensor = util.cos_sim(
+        user_embedding,
+        correct_embeddings
+    )
+    similarity_scores = similarity_scores_tensor[0].tolist()
 
     # Determine the highest similarity score.
     max_similarity = max(similarity_scores)
