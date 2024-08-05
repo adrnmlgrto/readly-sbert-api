@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sentence_transformers import SentenceTransformer, util
 
-
 # Setup of logging configurations.
 logging.basicConfig(level=logging.ERROR)
 logger = logging.getLogger(__name__)
@@ -136,24 +135,39 @@ async def compare_texts(request: TextComparisonRequest):
     on a set of provided "expected" correct answers to
     a user's text input / answer.
     """
-    # Encode all variations of correct answers.
-    correct_embeddings = model.encode(request.correct_answers)
+    try:
 
-    # Encode the user's answer.
-    user_embedding = model.encode(request.user_answer)
+        # Encode all variations of correct answers.
+        correct_embeddings = model.encode(request.correct_answers)
 
-    # Compute the individual similarity scores.
-    similarity_scores_tensor = util.cos_sim(
-        user_embedding,
-        correct_embeddings
-    )
-    similarity_scores = similarity_scores_tensor[0].tolist()
+        # Encode the user's answer.
+        user_embedding = model.encode(request.user_answer)
 
-    # Determine the highest similarity score.
-    max_similarity = max(similarity_scores)
+        # Compute the individual similarity scores.
+        similarity_scores_tensor = util.cos_sim(
+            user_embedding,
+            correct_embeddings
+        )
+        similarity_scores = similarity_scores_tensor[0].tolist()
 
-    # We will return the individual similarity scores, and the max.
-    return TextComparisonResponse(
-        similarity_scores=similarity_scores,
-        max_similarity=max_similarity
-    )
+        # Determine the highest similarity score.
+        max_similarity = max(similarity_scores)
+
+        # We will return the individual similarity scores,
+        # and the max similarity score on the list.
+        return {
+            'similarity_scores': similarity_scores,
+            'max_similarity': max_similarity
+        }
+
+    except Exception:
+
+        # We'll be careful here and catch any unexpected errors,
+        # then it'll be re-raised as a `HTTP 500` response.
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                'Something went wrong while processing '
+                'your request.'
+            )
+        )
