@@ -1,10 +1,11 @@
 import logging
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import SentenceTransformer
 
 # Setup of logging configurations.
 logging.basicConfig(level=logging.ERROR)
@@ -16,6 +17,7 @@ app = FastAPI()
 
 
 # Loading of the pre-trained SBERT model.
+# NOTE: By default, it uses the cosine similarity function.
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 
@@ -88,7 +90,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     # Return JSON response with error details
     return JSONResponse(
         status_code=exc.status_code,
-        content={"detail": exc.detail},
+        content=jsonable_encoder({"detail": exc.detail}),
     )
 
 
@@ -111,7 +113,7 @@ async def validation_exception_handler(
     # Return JSON response with error details
     return JSONResponse(
         status_code=422,
-        content={"detail": exc.errors()},
+        content=jsonable_encoder({"detail": exc.errors()}),
     )
 
 
@@ -144,7 +146,7 @@ async def compare_texts(request: TextComparisonRequest):
         user_embedding = model.encode(request.user_answer)
 
         # Compute the individual similarity scores.
-        similarity_scores_tensor = util.cos_sim(
+        similarity_scores_tensor = model.similarity(
             user_embedding,
             correct_embeddings
         )
