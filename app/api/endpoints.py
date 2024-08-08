@@ -44,7 +44,7 @@ async def compare_texts_endpoint(request: TextComparisonRequest):
             max_similarity=max_similarity
         )
 
-    except Exception:
+    except Exception as e:
 
         # We'll be careful here and catch any unexpected errors,
         # then it'll be re-raised as a `HTTP 500` response.
@@ -52,6 +52,6 @@ async def compare_texts_endpoint(request: TextComparisonRequest):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=(
                 'An unknown error has occurred while '
-                'processing your request.'
+                f'processing your request. Details: "{str(e)}"'
             )
         )
