@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error Logging Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Error Logging Dashboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Level</th>
+                <th>File</th>
+                <th>Line</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in log_records %}
+            <tr>
+                <td>{{ record.timestamp }}</td>
+                <td>{{ record.level }}</td>
+                <td>{{ record.file }}</td>
+                <td>{{ record.line }}</td>
+                <td>{{ record.message }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
