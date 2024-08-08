@@ -2,19 +2,21 @@ import logging
 import sys
 
 
-def setup_logging() -> logging.Logger:
+class InMemoryLogHandler(logging.Handler):
+    def __init__(self):
+        super().__init__()
+        self.log_records = []
+
+    def emit(self, record):
+        self.log_records.append(self.format(record))
+
+    def get_log_records(self):
+        return self.log_records
+
+
+def setup_logging() -> tuple[logging.Logger, InMemoryLogHandler]:
     """
-    Set up logging configuration with a custom formatter.
-
-    This function configures the root logger with the following:
-    - Sets the logging level to ERROR
-    - Uses a custom formatter that includes timestamp, logger name,
-      log level, filename, line number, and the log message
-    - Outputs logs to the console (stdout)
-
-    Returns:
-        logging.Logger: A configured logger instance ready for use
-        in the application.
+    Set up logging configuration with a custom in-memory handler.
     """
     # Create a custom formatter
     formatter = logging.Formatter(
@@ -30,8 +32,13 @@ def setup_logging() -> logging.Logger:
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(formatter)
 
-    # Add the console handler to the root logger
-    root_logger.addHandler(console_handler)
+    # Create an in-memory log handler
+    in_memory_handler = InMemoryLogHandler()
+    in_memory_handler.setFormatter(formatter)
 
-    # Return a logger for the calling module
-    return logging.getLogger(__name__)
+    # Add the handlers to the root logger
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(in_memory_handler)
+
+    # Return a logger for the calling module and the in-memory handler
+    return logging.getLogger(__name__), in_memory_handler
