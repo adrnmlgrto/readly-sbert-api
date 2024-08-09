@@ -1,11 +1,14 @@
+import re
+from datetime import datetime
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+
 from app.api import endpoints
 from app.core.logging import setup_logging
-import re
 
 app = FastAPI(title='Readly API', version='1.0.0')
 logger, in_memory_handler = setup_logging()
@@ -35,7 +38,20 @@ def parse_log_helper(log):
     }
 
 
-@app.get('/', response_class=HTMLResponse)
+def humanize_timestamp(timestamp: str) -> str:
+    """
+    Function for `Jinja2` template filter
+    for humanizing timestamps.
+    """
+    dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S,%f')
+    return dt.strftime('%b %d, %Y (%I:%M %p)')
+
+
+# Register the filter with Jinja2
+templates.env.filters['humanize_timestamp'] = humanize_timestamp
+
+
+@app.get('/errors', response_class=HTMLResponse, include_in_schema=False)
 async def dashboard(request: Request):
     """
     Render the logging dashboard HTML page.
