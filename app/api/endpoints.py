@@ -20,28 +20,36 @@ async def read_heartbeat():
 
 
 @router.post('/compare', response_model=TextComparisonResponse)
-async def compare_texts_endpoint(request: TextComparisonRequest):
+async def compute_similarities(request: TextComparisonRequest):
     """
-    Performs the semantic context similarity comparison
-    on a set of provided "expected" correct answers to
-    a user's text input / answer.
+    Performs a semantic context similarity comparison
+    with a list of expected "correct answers" and the
+    "user answer" for each question.
+
+    **Note**: Provide at least one (1) item in the `questions` parameter.
     """
     try:
 
-        # Extract the data from the request.
-        correct_answers = request.correct_answers
-        user_answer = request.user_answer
+        # Define the `max_similarity_scores` list to return.
+        max_similarity_scores = []
 
-        # Call the service function with individual parameters.
-        similarity_scores, max_similarity = await compare_texts(
-            correct_answers,
-            user_answer
-        )
+        # Iterate over each question to compute / compare.
+        for question in request.questions:
+
+            # Compute the similarity score for each question.
+            # NOTE: Similarity scores are for DEBUG purposes.
+            similarity_scores, max_similarity = await compare_texts(
+                question.correct_answers,
+                question.user_answer
+            )
+
+            # Append the computed max similarity score to the list.
+            # NOTE: List is ordered so it is from Q1 - Q(n).
+            max_similarity_scores.append(max_similarity)
 
         # Construct the response using the Pydantic model.
         return TextComparisonResponse(
-            similarity_scores=similarity_scores,
-            max_similarity=max_similarity
+            max_similarity_scores=max_similarity_scores
         )
 
     except Exception as e:
