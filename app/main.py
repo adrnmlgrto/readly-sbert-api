@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+from zoneinfo import ZoneInfo
 
 from app.api import endpoints
 from app.core.logging import setup_logging
@@ -15,7 +16,11 @@ logger, in_memory_handler = setup_logging()
 templates = Jinja2Templates(directory='app/templates')
 
 log_pattern = re.compile(
-    r'(?P<timestamp>[\d\-:, ]+) - (?P<level>\w+) - (?P<file>\w+\.py):(?P<line>\d+) - (?P<message>.*)'
+    r'(?P<timestamp>[\d\-:, ]+) - '
+    r'(?P<level>\w+) - '
+    r'(?P<file>\w+\.py):'
+    r'(?P<line>\d+) - '
+    r'(?P<message>.*)'
 )
 
 
@@ -43,7 +48,16 @@ def humanize_timestamp(timestamp: str) -> str:
     Function for `Jinja2` template filter
     for humanizing timestamps.
     """
+    # Convert timestamp string to datetime object
     dt = datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S,%f')
+
+    # Define Philippine Time timezone
+    timezone = ZoneInfo('Asia/Manila')
+
+    # Localize the datetime object
+    dt = dt.replace(tzinfo=timezone)
+
+    # Format the datetime object
     return dt.strftime('%b %d, %Y (%I:%M %p)')
 
 
