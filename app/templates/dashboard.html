@@ -40,7 +40,7 @@
         <tbody>
             {% for record in log_records %}
             <tr>
-                <td>{{ record.timestamp }}</td>
+                <td>{{ record.timestamp|humanize_timestamp }}</td>
                 <td>{{ record.level }}</td>
                 <td>{{ record.file }}</td>
                 <td>{{ record.line }}</td>
@@ -49,5 +49,23 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <script>
+        function fetchAndRenderDashboard() {
+            fetch('/errors')
+                .then(response => response.text())
+                .then(html => {
+                    document.body.innerHTML = html;
+                })
+                .catch(error => console.error(
+                        'Error fetching and rendering dashboard:',
+                        error
+                    )
+                );
+        }
+
+        setInterval(fetchAndRenderDashboard, 5000);  // Refresh every 5 seconds
+    </script>
+
 </body>
 </html>
