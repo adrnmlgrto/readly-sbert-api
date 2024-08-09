@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 
-class TextComparisonRequest(BaseModel):
+class QuestionSchema(BaseModel):
     correct_answers: list[str] = Field(
         ...,
         description=(
@@ -26,27 +26,29 @@ class TextComparisonRequest(BaseModel):
     )
 
 
-class TextComparisonResponse(BaseModel):
-    similarity_scores: list[float] = Field(
+class TextComparisonRequest(BaseModel):
+    questions: list[QuestionSchema] = Field(
         ...,
         description=(
-            'List of individual similarity scores upon comparing '
-            'user text input to the expected answers.'
+            'The list of each question\'s `correct_answers`, '
+            'and `user_answer`. Should contain at least one (1) item.'
+        ),
+        min_length=1
+    )
+
+
+class TextComparisonResponse(BaseModel):
+    max_similarity_scores: list[float] = Field(
+        ...,
+        description=(
+            'The list of max similarity scores from the '
+            'first question to the last question in order.'
         ),
         examples=[
-            [
-                0.5203630636661963,
-                0.8931472296869409,
-                0.612681223305576
-            ]
+            0.8931472296869409,
+            0.7481487743874386,
+            0.9412736237618937,
+            0.3693782387326723,
+            0.8237823782623171
         ]
-    )
-    max_similarity: float = Field(
-        ...,
-        description=(
-            'The highest similarity score from the list. '
-            'This value is the one to check if the user\'s input '
-            'is similar or not.'
-        ),
-        examples=[0.8931472296869409]
     )
