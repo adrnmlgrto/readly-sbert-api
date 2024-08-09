@@ -44,11 +44,11 @@ class TextComparisonResponse(BaseModel):
             'The list of max similarity scores from the '
             'first question to the last question in order.'
         ),
-        examples=[
+        examples=[[
             0.8931472296869409,
             0.7481487743874386,
             0.9412736237618937,
             0.3693782387326723,
             0.8237823782623171
-        ]
+        ]]
     )
